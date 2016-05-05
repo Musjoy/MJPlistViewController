@@ -1,0 +1,17 @@
+PODS:
+  - MJPlistViewController (0.1.0):
+    - ModuleCapability (~> 0.1.1)
+  - ModuleCapability (0.1.1)
+
+DEPENDENCIES:
+  - MJPlistViewController (from `../`)
+
+EXTERNAL SOURCES:
+  MJPlistViewController:
+    :path: ../
+
+SPEC CHECKSUMS:
+  MJPlistViewController: 89e6c9013b443aa74dee399331353eb025e84929
+  ModuleCapability: c58431991173e091993386b1840082a2540f2de1
+
+COCOAPODS: 0.39.0
