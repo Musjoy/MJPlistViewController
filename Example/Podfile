@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'MJPlistViewController_Example', :exclusive => true do
+  pod 'MJPlistViewController', :path => '../'
+end
+
+target 'MJPlistViewController_Tests', :exclusive => true do
+  pod 'MJPlistViewController', :path => '../'
+
+  
+end
