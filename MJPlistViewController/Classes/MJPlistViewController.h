@@ -6,16 +6,9 @@
 //  Copyright © 2016年 Musjoy. All rights reserved.
 //
 
-#ifdef MODULE_SUB_BASE_VIEW_CONTROLLER
-#import "BaseViewController.h"
-@interface MJPlistViewController : BaseViewController<UITableViewDelegate, UITableViewDataSource>
-#elif defined(MODULE_CONTROLLER_MANAGER)
-#import "MJBaseViewController.h"
-@interface MJPlistViewController : MJBaseViewController<UITableViewDelegate, UITableViewDataSource>
-#else
-#import <UIKit/UIKit.h>
-@interface MJPlistViewController : UIViewController<UITableViewDelegate, UITableViewDataSource>
-#endif
+#import HEADER_BASE_VIEW_CONTROLLER
+
+@interface MJPlistViewController : THEBaseViewController<UITableViewDelegate, UITableViewDataSource>
 
 @property (nonatomic, strong) IBOutlet UITableView *tableView;
 
