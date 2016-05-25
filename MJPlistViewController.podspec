@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = "MJPlistViewController"
-  s.version          = "0.1.0"
+  s.version          = "0.1.1"
   s.summary          = "This is view controller with table view which read the data from plist file."
 
   s.homepage         = "https://github.com/Musjoy/MJPlistViewController"
@@ -24,7 +24,7 @@ Pod::Spec.new do |s|
     'GCC_PREPROCESSOR_DEFINITIONS' => 'MODULE_PLIST_CONTROLLER'
   }
 
-  s.dependency 'ModuleCapability', '~> 0.1.1'
+  s.dependency 'ModuleCapability', '~> 0.1.2'
   s.prefix_header_contents = '#import "ModuleCapability.h"'
 
 end
