@@ -40,15 +40,19 @@
 + (__kindof UITableViewCell *)cellWithStyle:(UITableViewCellStyle)style reuseIdentifier:(nullable NSString *)reuseIdentifier
 {
     NSString *filePath = [[NSBundle mainBundle] pathForResource:NSStringFromClass([self class]) ofType:@"nib"];
+    UITableViewCell *cell = nil;
     if (filePath.length > 0) {
-        UITableViewCell *cell = [[[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:self  options:nil] objectAtIndex:0];
+        cell = [self viewFromNib];
         if (cell == nil) {
             cell = [[self alloc] init];
         }
-        return cell;
     } else {
-        return [[super alloc] initWithStyle:style reuseIdentifier:reuseIdentifier];
+        cell = [[super alloc] initWithStyle:style reuseIdentifier:reuseIdentifier];
     }
+#ifdef MODULE_THEME_MANAGER
+    [cell reloadTheme];
+#endif
+    return cell;
 }
 
 - (void)configWithData:(id)data
@@ -114,7 +118,9 @@
         [_tableView setDelegate:self];
 //        [_tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
         [self.view addSubview:_tableView];
-        
+#ifdef MODULE_THEME_MANAGER
+        [_tableView setSeparatorColor:[MJThemeManager colorFor:kThemeCellLineColor]];
+#endif
         if (self.view.subviews.count > 1) {
             if (__CUR_IOS_VERSION >= __IPHONE_7_0) {
                 // 界面调整
@@ -445,6 +451,7 @@
     if (cell == nil) {
         NSString *cellClass = [aDic objectForKey:@"cellClass"];
         cell = [NSClassFromString(cellClass) cellWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
+#ifndef MODULE_THEME_MANAGER
         if (_cellColor) {
             [cell setBackgroundColor:_cellColor];
         }
@@ -462,6 +469,7 @@
             [cell setDelegate:self];
 #endif
         }
+#endif
     }
     // Configure the cell...
     
