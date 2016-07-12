@@ -464,12 +464,12 @@
             [viewBg setBackgroundColor:_cellSelectBgColor];
             [cell setSelectedBackgroundView:viewBg];
         }
+#endif
         if ([cell respondsToSelector:@selector(setDelegate:)]) {
 #ifdef MODULE_UTILS
             [cell setDelegate:self];
 #endif
         }
-#endif
     }
     // Configure the cell...
     
