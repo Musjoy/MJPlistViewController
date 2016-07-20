@@ -20,7 +20,7 @@
 
 #define DEFAULT_SECTION_HEADER_HEIGHT 30
 #define DEFAULT_SECTION_FOOTER_HEIGHT 0
-#define DEFAULT_LINE_LEFT_PADDING 15
+#define DEFAULT_LINE_LEFT_PADDING 15.0f
 
 #pragma mark - Addition
 
@@ -149,6 +149,9 @@
     _tableView.tableFooterView = [[UIView alloc] init];
     if (_lineLeftPadding == 0) {
         _lineLeftPadding = DEFAULT_LINE_LEFT_PADDING;
+    }
+    if ([_tableView respondsToSelector:@selector(setLayoutMargins:)]) {
+        [_tableView setLayoutMargins:UIEdgeInsetsZero]; // ios 8 newly added
     }
     [_tableView setSeparatorInset:UIEdgeInsetsMake(0, _lineLeftPadding, 0, 0)];
 }
