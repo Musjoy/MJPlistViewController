@@ -164,7 +164,7 @@
         return;
     }
     
-    NSArray *arr = getPlistFileData(_fileName);
+    NSArray *arr = getFileData(_fileName);
     self.arrItems = [arr mutableCopy];
 
 //    [_tableView reloadData];
