@@ -42,7 +42,7 @@
     NSString *filePath = [[NSBundle mainBundle] pathForResource:NSStringFromClass([self class]) ofType:@"nib"];
     UITableViewCell *cell = nil;
     if (filePath.length > 0) {
-        cell = [self viewFromNib];
+        cell = [[[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:self  options:nil] objectAtIndex:0];
         if (cell == nil) {
             cell = [[self alloc] init];
         }
