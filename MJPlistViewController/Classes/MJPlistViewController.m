@@ -548,7 +548,8 @@
             if ([strAction hasSuffix:@":"]) {
                 IMP imp = [self methodForSelector:action];
                 void (*func)(id, SEL, id) = (void *)imp;
-                func(self, action, aDic);
+                id data = aDic[@"actionData"]?:aDic;
+                func(self, action, data);
             } else {
                 IMP imp = [self methodForSelector:action];
                 void (*func)(id, SEL) = (void *)imp;
