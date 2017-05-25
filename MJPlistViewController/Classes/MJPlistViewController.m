@@ -7,6 +7,7 @@
 //
 
 #import "MJPlistViewController.h"
+#import HEADER_LOCALIZE
 
 #ifdef MODULE_FILE_SOURCE
 #import "FileSource.h"
@@ -91,6 +92,8 @@
 
 @property (nonatomic, strong) NSMutableArray *arrViewHeaders;
 
+@property (nonatomic, assign) BOOL singleGroup;                         ///< 是否只有一组
+
 @end
 
 @implementation MJPlistViewController
@@ -167,8 +170,32 @@
         return;
     }
     
-    NSArray *arr = getFileData(_fileName);
-    self.arrItems = [arr mutableCopy];
+    id data = getFileData(_fileName);
+    if (data == nil) {
+        LogError(@"Cann't get any data from file { %@ }", _fileName);
+    }
+    if ([data isKindOfClass:[NSArray class]]) {
+        self.arrItems = [data mutableCopy];
+    } else if ([data isKindOfClass:[NSDictionary class]]) {
+        // 字典，这里需要智能读取数据
+        if ([data objectForKey:@"groupList"]) {
+            self.arrItems = [data objectForKey:@"groupList"];
+        } else if ([data objectForKey:@"itemList"]) {
+            // 只有一组
+            self.arrItems = [data objectForKey:@"itemList"];
+            _singleGroup = YES;
+        }
+        // 支持不同地区显示，后面添加
+        
+        // 国际化支持
+#ifdef MODULE_LOCALIZE
+        NSDictionary *dicLocalize = [data objectForKey:kLocalizable];
+        if (dicLocalize) {
+            [[MJLocalize sharedInstance] addLocalizedStringWith:dicLocalize];
+        }
+#endif
+    }
+    
 
 //    [_tableView reloadData];
 }
@@ -182,6 +209,9 @@
 
 - (void)deleteGroup:(NSString *)groupKey
 {
+    if (_singleGroup) {
+        return;
+    }
     if (_arrItems.count == 0) {
         return;
     }
@@ -204,6 +234,17 @@
 - (void)deleteCell:(NSString *)cellKey Group:(NSString *)groupKey
 {
     if (_arrItems.count == 0) {
+        return;
+    }
+    if (_singleGroup) {
+        for (NSInteger j=0, len1=_arrItems.count; j<len1; j++) {
+            NSDictionary *aDicCell = _arrItems[j];
+            NSString *aKeyForCell = aDicCell[@"keyForCell"];
+            if (aKeyForCell && aKeyForCell.length > 0 && [aKeyForCell isEqualToString:cellKey]) {
+                [_arrItems removeObject:aDicCell];
+                break;
+            }
+        }
         return;
     }
     if (!groupKey && groupKey.length == 0) {
@@ -237,6 +278,17 @@
 
 - (NSIndexPath *)indexPathForCellKey:(NSString *)cellKey
 {
+    if (_singleGroup) {
+        for (NSInteger i=0, len=_arrItems.count; i<len; i++) {
+            NSDictionary *aDic = _arrItems[i];
+            NSString *aKeyForCell = aDic[@"keyForCell"];
+            if (aKeyForCell && aKeyForCell.length > 0 && [aKeyForCell isEqualToString:cellKey]) {
+                NSIndexPath *aIndexPath = [NSIndexPath indexPathForRow:i inSection:0];
+                return aIndexPath;
+            }
+        }
+        return nil;
+    }
     for (NSInteger i=0, len=_arrItems.count; i<len; i++) {
         NSDictionary *aDic = _arrItems[i];
         NSMutableArray *arrItems = aDic[@"itemList"];
@@ -254,14 +306,6 @@
 
 
 #pragma mark - Private
-
-- (NSString *)filePathWithFileName:(NSString *)aFileName
-{
-    NSString *fileDir = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"Plists"];
-    NSString *fullName = [aFileName stringByAppendingString:@".plist"];
-    NSString *filePath = [fileDir stringByAppendingPathComponent:fullName];
-    return filePath;
-}
 
 - (void)storeHeaderView:(UIView *)aHeaderView inSection:(NSInteger)section
 {
@@ -316,24 +360,26 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     // Return the number of sections.
-    return [_arrItems count];
+    return _singleGroup?1:[_arrItems count];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     // Return the number of rows in the section.
-    return [[[_arrItems objectAtIndex:section] objectForKey:@"itemList"] count];
+    return _singleGroup?[_arrItems count]:[[[_arrItems objectAtIndex:section] objectForKey:@"itemList"] count];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
     CGFloat headerHeight = [self heightForHeaderInSection:section];
     
-    NSDictionary *aDic = [_arrItems objectAtIndex:section];
-    NSNumber *aHeight = [aDic objectForKey:@"headerHeight"];
-    
-    if (aHeight) {
-        headerHeight = [aHeight floatValue];
+    if (!_singleGroup) {
+        NSDictionary *aDic = [_arrItems objectAtIndex:section];
+        NSNumber *aHeight = [aDic objectForKey:@"headerHeight"];
+        
+        if (aHeight) {
+            headerHeight = [aHeight floatValue];
+        }
     }
     
     if (headerHeight < 1) {
@@ -347,6 +393,12 @@
 {
     UIView *aViewHeader = [self viewForHeaderInSection:section];
     if (aViewHeader) {
+        [self storeHeaderView:aViewHeader inSection:section];
+        return aViewHeader;
+    }
+    
+    if (_singleGroup) {
+        aViewHeader = [[UIView alloc] init];
         [self storeHeaderView:aViewHeader inSection:section];
         return aViewHeader;
     }
@@ -389,13 +441,15 @@
         headerHeight = DEFAULT_SECTION_FOOTER_HEIGHT;
     }
     
-    NSDictionary *aDic = [_arrItems objectAtIndex:section];
-    NSString *groupFooter = [aDic objectForKey:@"groupFooter"];
-    
-    if (groupFooter) {
-        UIFont *font = [UIFont boldSystemFontOfSize:14];
-        CGSize aSize = multilineTextSize(groupFooter, font, CGSizeMake(kScreenWidth-2*_lineLeftPadding, 1000));
-        headerHeight = aSize.height + 10;
+    if (!_singleGroup) {
+        NSDictionary *aDic = [_arrItems objectAtIndex:section];
+        NSString *groupFooter = [aDic objectForKey:@"groupFooter"];
+        
+        if (groupFooter) {
+            UIFont *font = [UIFont boldSystemFontOfSize:14];
+            CGSize aSize = multilineTextSize(groupFooter, font, CGSizeMake(kScreenWidth-2*_lineLeftPadding, 1000));
+            headerHeight = aSize.height + 10;
+        }
     }
     
     return headerHeight;
@@ -406,6 +460,10 @@
     UIView *aViewFooter = [self viewForFooterInSection:section];
     if (aViewFooter) {
         return aViewFooter;
+    }
+    
+    if (_singleGroup) {
+        return [[UIView alloc] init];
     }
     
     NSDictionary *aDic = [_arrItems objectAtIndex:section];
@@ -439,7 +497,7 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSDictionary *dic = [[[_arrItems objectAtIndex:indexPath.section] objectForKey:@"itemList"] objectAtIndex:indexPath.row];
+    NSDictionary *dic = [self dicForIndexPath:indexPath];;
     CGFloat aHeight = [[dic objectForKey:@"cellHeight"] floatValue];
     return aHeight;
 }
@@ -499,7 +557,7 @@
 
 - (NSDictionary *)dicForIndexPath:(NSIndexPath *)indexPath
 {
-    NSDictionary *dic = [[[_arrItems objectAtIndex:indexPath.section] objectForKey:@"itemList"] objectAtIndex:indexPath.row];
+    NSDictionary *dic = _singleGroup ? _arrItems[indexPath.row] : [[[_arrItems objectAtIndex:indexPath.section] objectForKey:@"itemList"] objectAtIndex:indexPath.row];
     return dic;
 }
 
