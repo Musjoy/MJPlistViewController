@@ -38,7 +38,7 @@
 
 - (void)deleteGroup:(NSString *)groupKey;
 
-- (void)deleteCell:(NSString *)cellKey Group:(NSString *)groupKey;
+- (void)deleteCell:(NSString *)cellKey inGroup:(NSString *)groupKey;
 
 - (NSIndexPath *)indexPathForCellKey:(NSString *)cellKey;
 

@@ -231,7 +231,7 @@
     }
 }
 
-- (void)deleteCell:(NSString *)cellKey Group:(NSString *)groupKey
+- (void)deleteCell:(NSString *)cellKey inGroup:(NSString *)groupKey
 {
     if (_arrItems.count == 0) {
         return;
