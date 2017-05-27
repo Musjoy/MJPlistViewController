@@ -265,7 +265,9 @@
                     [arrItems removeObject:aDicCell];
                     if (arrItems.count == 0) {
                         [_arrItems removeObject:aDic];
-                        [_arrViewHeaders removeObjectAtIndex:j];
+                        if (_arrViewHeaders.count > j) {
+                            [_arrViewHeaders removeObjectAtIndex:j];
+                        }
                     }
                     break;
                 }
