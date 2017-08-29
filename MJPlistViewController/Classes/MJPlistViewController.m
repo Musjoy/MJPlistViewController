@@ -94,6 +94,10 @@
 
 @property (nonatomic, assign) BOOL singleGroup;                         ///< 是否只有一组
 
+#ifdef MODULE_LOCALIZE
+@property (nonatomic, strong) NSString *localizeTableId;
+#endif
+
 @end
 
 @implementation MJPlistViewController
@@ -164,6 +168,20 @@
     _dicAttachments = [[NSMutableDictionary alloc] init];
     _arrViewHeaders = [[NSMutableArray alloc] init];
     
+    [self reloadData];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - Public
+
+- (void)reloadData
+{
+    [_arrViewHeaders removeAllObjects];
+    
     if (_fileName.length == 0) {
         LogError(@"Can not init this view controller, while fileName is nil");
         _arrItems = [[NSMutableArray alloc] init];
@@ -189,23 +207,17 @@
         
         // 国际化支持
 #ifdef MODULE_LOCALIZE
+        if (_localizeTableId) {
+            [[MJLocalize sharedInstance] removeLocalizedWith:_localizeTableId];
+            _localizeTableId = nil;
+        }
         NSDictionary *dicLocalize = [data objectForKey:kLocalizable];
         if (dicLocalize) {
-            [[MJLocalize sharedInstance] addLocalizedStringWith:dicLocalize];
+            _localizeTableId = [[MJLocalize sharedInstance] addLocalizedStringWith:dicLocalize];
         }
 #endif
     }
-    
-
-//    [_tableView reloadData];
 }
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
-#pragma mark - Public
 
 - (void)deleteGroup:(NSString *)groupKey
 {
@@ -374,6 +386,9 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
     CGFloat headerHeight = [self heightForHeaderInSection:section];
+    if (headerHeight > 0) {
+        return headerHeight;
+    }
     
     if (!_singleGroup) {
         NSDictionary *aDic = [_arrItems objectAtIndex:section];
@@ -384,7 +399,7 @@
         }
     }
     
-    if (headerHeight < 1) {
+    if (headerHeight <= 0) {
         headerHeight = DEFAULT_SECTION_HEADER_HEIGHT;
     }
 
@@ -438,9 +453,9 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
 {
-    CGFloat headerHeight = [self heightForFooterInSection:section];
-    if (headerHeight < 1) {
-        headerHeight = DEFAULT_SECTION_FOOTER_HEIGHT;
+    CGFloat footerHeight = [self heightForFooterInSection:section];
+    if (footerHeight > 0) {
+        return footerHeight;
     }
     
     if (!_singleGroup) {
@@ -450,11 +465,15 @@
         if (groupFooter) {
             UIFont *font = [UIFont boldSystemFontOfSize:14];
             CGSize aSize = multilineTextSize(groupFooter, font, CGSizeMake(kScreenWidth-2*_lineLeftPadding, 1000));
-            headerHeight = aSize.height + 10;
+            footerHeight = aSize.height + 10;
         }
     }
     
-    return headerHeight;
+    if (footerHeight <= 0) {
+        footerHeight = DEFAULT_SECTION_FOOTER_HEIGHT;
+    }
+    
+    return footerHeight;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
@@ -646,6 +665,17 @@
     return nil;
 }
 #endif
+
+#pragma mark - Dealloc
+
+- (void)dealloc
+{
+#ifdef MODULE_LOCALIZE
+    if (_localizeTableId) {
+        [[MJLocalize sharedInstance] removeLocalizedWith:_localizeTableId];
+    }
+#endif
+}
 
 @end
 

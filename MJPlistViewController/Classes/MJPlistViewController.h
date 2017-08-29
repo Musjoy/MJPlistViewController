@@ -36,6 +36,8 @@
 
 #pragma mark - Public
 
+- (void)reloadData;
+
 - (void)deleteGroup:(NSString *)groupKey;
 
 - (void)deleteCell:(NSString *)cellKey inGroup:(NSString *)groupKey;
