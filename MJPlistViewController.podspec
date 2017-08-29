@@ -24,7 +24,7 @@ Pod::Spec.new do |s|
     'GCC_PREPROCESSOR_DEFINITIONS' => 'MODULE_PLIST_CONTROLLER'
   }
 
-  s.dependency 'ModuleCapability', '~> 0.1.2'
+  s.dependency 'ModuleCapability', '~> 0.1'
   s.prefix_header_contents = '#import "ModuleCapability.h"'
 
 end
