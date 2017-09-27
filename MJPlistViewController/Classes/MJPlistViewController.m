@@ -197,10 +197,10 @@
     } else if ([data isKindOfClass:[NSDictionary class]]) {
         // 字典，这里需要智能读取数据
         if ([data objectForKey:@"groupList"]) {
-            self.arrItems = [data objectForKey:@"groupList"];
+            self.arrItems = [[data objectForKey:@"groupList"] mutableCopy];
         } else if ([data objectForKey:@"itemList"]) {
             // 只有一组
-            self.arrItems = [data objectForKey:@"itemList"];
+            self.arrItems = [[data objectForKey:@"itemList"] mutableCopy];
             _singleGroup = YES;
         }
         // 支持不同地区显示，后面添加
