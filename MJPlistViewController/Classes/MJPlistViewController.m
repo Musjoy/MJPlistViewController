@@ -196,11 +196,11 @@
         self.arrItems = [data mutableCopy];
     } else if ([data isKindOfClass:[NSDictionary class]]) {
         // 字典，这里需要智能读取数据
-        if ([data objectForKey:@"groupList"]) {
-            self.arrItems = [[data objectForKey:@"groupList"] mutableCopy];
-        } else if ([data objectForKey:@"itemList"]) {
+        if ([data objectForKey:k_PlistVCGroupList]) {
+            self.arrItems = [[data objectForKey:k_PlistVCGroupList] mutableCopy];
+        } else if ([data objectForKey:k_PlistVCItemList]) {
             // 只有一组
-            self.arrItems = [[data objectForKey:@"itemList"] mutableCopy];
+            self.arrItems = [[data objectForKey:k_PlistVCItemList] mutableCopy];
             _singleGroup = YES;
         }
         // 支持不同地区显示，后面添加
@@ -232,7 +232,7 @@
     }
     for (NSInteger i=0, len=_arrItems.count; i<len; i++) {
         NSDictionary *aDic = _arrItems[i];
-        NSString *aGroupKey = aDic[@"groupKey"];
+        NSString *aGroupKey = aDic[k_PlistVCGroupKey];
         if (aGroupKey && aGroupKey.length > 0 && [aGroupKey isEqualToString:groupKey]) {
             [_arrItems removeObject:aDic];
             if (_arrViewHeaders.count > i) {
@@ -245,14 +245,19 @@
 
 - (void)deleteCell:(NSString *)cellKey inGroup:(NSString *)groupKey
 {
+    [self deleteItem:cellKey inGroup:groupKey];
+}
+
+- (void)deleteItem:(NSString *)itemKey inGroup:(NSString *)groupKey
+{
     if (_arrItems.count == 0) {
         return;
     }
     if (_singleGroup) {
         for (NSInteger j=0, len1=_arrItems.count; j<len1; j++) {
             NSDictionary *aDicCell = _arrItems[j];
-            NSString *aKeyForCell = aDicCell[@"keyForCell"];
-            if (aKeyForCell && aKeyForCell.length > 0 && [aKeyForCell isEqualToString:cellKey]) {
+            NSString *aKeyForCell = [self keyForItem:aDicCell];
+            if (aKeyForCell && aKeyForCell.length > 0 && [aKeyForCell isEqualToString:itemKey]) {
                 [_arrItems removeObject:aDicCell];
                 break;
             }
@@ -262,18 +267,26 @@
     if (!groupKey && groupKey.length == 0) {
         return;
     }
-    if (!cellKey && cellKey.length == 0) {
+    if (!itemKey && itemKey.length == 0) {
         return;
     }
+    
     for (NSInteger i=0, len=_arrItems.count; i<len; i++) {
         NSDictionary *aDic = _arrItems[i];
-        NSString *aGroupKey = aDic[@"groupKey"];
+        NSString *aGroupKey = aDic[k_PlistVCGroupKey];
         if (aGroupKey && aGroupKey.length > 0 && [aGroupKey isEqualToString:groupKey]) {
-            NSMutableArray *arrItems = aDic[@"itemList"];
+            NSMutableArray *arrItems = aDic[k_PlistVCItemList];
+            if (![arrItems isKindOfClass:[NSMutableArray class]]) {
+                arrItems = [arrItems mutableCopy];
+                NSMutableDictionary *newDic = [aDic mutableCopy];
+                [newDic setObject:arrItems forKey:k_PlistVCItemList];
+                [_arrItems replaceObjectAtIndex:i withObject:newDic];
+                aDic = newDic;
+            }
             for (NSInteger j=0, len1=arrItems.count; j<len1; j++) {
                 NSDictionary *aDicCell = arrItems[j];
-                NSString *aKeyForCell = aDicCell[@"keyForCell"];
-                if (aKeyForCell && aKeyForCell.length > 0 && [aKeyForCell isEqualToString:cellKey]) {
+                NSString *aKeyForCell = [self keyForItem:aDicCell];;
+                if (aKeyForCell && aKeyForCell.length > 0 && [aKeyForCell isEqualToString:itemKey]) {
                     [arrItems removeObject:aDicCell];
                     if (arrItems.count == 0) {
                         [_arrItems removeObject:aDic];
@@ -295,7 +308,7 @@
     if (_singleGroup) {
         for (NSInteger i=0, len=_arrItems.count; i<len; i++) {
             NSDictionary *aDic = _arrItems[i];
-            NSString *aKeyForCell = aDic[@"keyForCell"];
+            NSString *aKeyForCell = [self keyForItem:aDic];
             if (aKeyForCell && aKeyForCell.length > 0 && [aKeyForCell isEqualToString:cellKey]) {
                 NSIndexPath *aIndexPath = [NSIndexPath indexPathForRow:i inSection:0];
                 return aIndexPath;
@@ -305,10 +318,10 @@
     }
     for (NSInteger i=0, len=_arrItems.count; i<len; i++) {
         NSDictionary *aDic = _arrItems[i];
-        NSMutableArray *arrItems = aDic[@"itemList"];
+        NSMutableArray *arrItems = aDic[k_PlistVCItemList];
         for (NSInteger j=0, len1=arrItems.count; j<len1; j++) {
             NSDictionary *aDicCell = arrItems[j];
-            NSString *aKeyForCell = aDicCell[@"keyForCell"];
+            NSString *aKeyForCell = [self keyForItem:aDicCell];
             if (aKeyForCell && aKeyForCell.length > 0 && [aKeyForCell isEqualToString:cellKey]) {
                 NSIndexPath *aIndexPath = [NSIndexPath indexPathForRow:j inSection:i];
                 return aIndexPath;
@@ -318,9 +331,15 @@
     return nil;
 }
 
+- (void)pushViewController:(UIViewController *)aVC
+{
+    UINavigationController *theNavVC = (UINavigationController *)self.navigationController;
+    [theNavVC pushViewController:aVC animated:YES];
+}
 
 #pragma mark - Private
 
+/// 保存头部视图
 - (void)storeHeaderView:(UIView *)aHeaderView inSection:(NSInteger)section
 {
     if (_arrViewHeaders.count > section) {
@@ -328,6 +347,13 @@
     } else if (_arrViewHeaders.count == section) {
         [_arrViewHeaders addObject:aHeaderView];
     }
+}
+
+/// 读取cell数据中的Key
+- (NSString *)keyForItem:(NSDictionary *)aDic
+{
+    NSString *aKey = aDic[k_PlistVCItemKey]?:aDic[@"keyForCell"];
+    return aKey;
 }
 
 /*
@@ -380,7 +406,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     // Return the number of rows in the section.
-    return _singleGroup?[_arrItems count]:[[[_arrItems objectAtIndex:section] objectForKey:@"itemList"] count];
+    return _singleGroup?[_arrItems count]:[[[_arrItems objectAtIndex:section] objectForKey:k_PlistVCItemList] count];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
@@ -392,7 +418,7 @@
     
     if (!_singleGroup) {
         NSDictionary *aDic = [_arrItems objectAtIndex:section];
-        NSNumber *aHeight = [aDic objectForKey:@"headerHeight"];
+        NSNumber *aHeight = [aDic objectForKey:k_PlistVCGroupHeaderHeight];
         
         if (aHeight) {
             headerHeight = [aHeight floatValue];
@@ -421,7 +447,7 @@
     }
     
     NSDictionary *aDic = [_arrItems objectAtIndex:section];
-    NSString *sectionTitle = [aDic objectForKey:@"groupTitle"];
+    NSString *sectionTitle = [aDic objectForKey:k_PlistVCGroupTitle];
     float aHeight = [self tableView:_tableView heightForHeaderInSection:section];
     
     if (sectionTitle.length == 0) {
@@ -460,7 +486,7 @@
     
     if (!_singleGroup) {
         NSDictionary *aDic = [_arrItems objectAtIndex:section];
-        NSString *groupFooter = [aDic objectForKey:@"groupFooter"];
+        NSString *groupFooter = [aDic objectForKey:k_PlistVCGroupFooter];
         
         if (groupFooter) {
             UIFont *font = [UIFont boldSystemFontOfSize:14];
@@ -488,7 +514,7 @@
     }
     
     NSDictionary *aDic = [_arrItems objectAtIndex:section];
-    NSString *groupFooter = [aDic objectForKey:@"groupFooter"];
+    NSString *groupFooter = [aDic objectForKey:k_PlistVCGroupFooter];
     float aHeight = 10;
     
     CGRect rect = CGRectMake(0, 0, tableView.frame.size.width, aHeight);
@@ -519,7 +545,7 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSDictionary *dic = [self dicForIndexPath:indexPath];;
-    CGFloat aHeight = [[dic objectForKey:@"cellHeight"] floatValue];
+    CGFloat aHeight = [[dic objectForKey:k_PlistVCCellHeight] floatValue];
     return aHeight;
 }
 
@@ -528,10 +554,10 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSDictionary *aDic = [self dicForIndexPath:indexPath];   //  当前cell对应的内容dic
-    NSString *identifier = [aDic objectForKey:@"cellIdentifier"];
+    NSString *identifier = aDic[k_PlistVCCellReuseId]?:[aDic objectForKey:@"cellIdentifier"];
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
     if (cell == nil) {
-        NSString *cellClass = [aDic objectForKey:@"cellClass"];
+        NSString *cellClass = [aDic objectForKey:k_PlistVCCellClass];
         cell = [NSClassFromString(cellClass) cellWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
 #ifndef MODULE_THEME_MANAGER
         if (_cellColor) {
@@ -557,7 +583,7 @@
     
     NSMutableDictionary *dicForCell = [aDic mutableCopy];  // 内容
     
-    NSString *keyForCell = [aDic objectForKey:@"keyForCell"];
+    NSString *keyForCell = [self keyForItem:aDic];
     
     id attachData = nil;
     if (keyForCell.length > 0) {
@@ -578,7 +604,7 @@
 
 - (NSDictionary *)dicForIndexPath:(NSIndexPath *)indexPath
 {
-    NSDictionary *dic = _singleGroup ? _arrItems[indexPath.row] : [[[_arrItems objectAtIndex:indexPath.section] objectForKey:@"itemList"] objectAtIndex:indexPath.row];
+    NSDictionary *dic = _singleGroup ? _arrItems[indexPath.row] : [[[_arrItems objectAtIndex:indexPath.section] objectForKey:k_PlistVCItemList] objectAtIndex:indexPath.row];
     return dic;
 }
 
@@ -614,9 +640,7 @@
 #endif
                 [self presentViewController:aNavVC animated:YES completion:NULL];
             } else {
-                UINavigationController *theNavVC = (UINavigationController *)self.navigationController;
-                // Push the view controller.
-                [theNavVC pushViewController:pushVC animated:YES];
+                [self pushViewController:pushVC];
             }
             return;
         }
