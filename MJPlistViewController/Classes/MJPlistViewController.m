@@ -276,13 +276,13 @@
         NSString *aGroupKey = aDic[k_PlistVCGroupKey];
         if (aGroupKey && aGroupKey.length > 0 && [aGroupKey isEqualToString:groupKey]) {
             NSMutableArray *arrItems = aDic[k_PlistVCItemList];
-            if (![arrItems isKindOfClass:[NSMutableArray class]]) {
+//            if (![arrItems isKindOfClass:[NSMutableArray class]]) {
                 arrItems = [arrItems mutableCopy];
                 NSMutableDictionary *newDic = [aDic mutableCopy];
                 [newDic setObject:arrItems forKey:k_PlistVCItemList];
                 [_arrItems replaceObjectAtIndex:i withObject:newDic];
                 aDic = newDic;
-            }
+//            }
             for (NSInteger j=0, len1=arrItems.count; j<len1; j++) {
                 NSDictionary *aDicCell = arrItems[j];
                 NSString *aKeyForCell = [self keyForItem:aDicCell];;
