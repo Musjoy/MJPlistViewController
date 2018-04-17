@@ -9,13 +9,11 @@
 #import "MJPlistViewController.h"
 #import HEADER_LOCALIZE
 
-#ifdef MODULE_FILE_SOURCE
-#import "FileSource.h"
-#endif
+#import HEADER_FILE_SOURCE
 
-#ifdef MODULE_CONTROLLER_MANAGER
-#import "MJNavigationController.h"
-#import "MJControllerManager.h"
+#ifdef  MODULE_CONTROLLER_MANAGER
+#import HEADER_NAVIGATION_CONTROLLER
+#import HEADER_CONTROLLER_MANAGER
 #endif
 
 
