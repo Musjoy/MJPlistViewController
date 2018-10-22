@@ -632,7 +632,7 @@
             NSNumber *usePresent = aDic[@"usePresent"];
             if (usePresent && [usePresent boolValue]) {
 #ifdef MODULE_CONTROLLER_MANAGER
-                MJNavigationController *aNavVC = [[MJNavigationController alloc] initWithRootViewController:pushVC];
+                UINavigationController *aNavVC = [[THENavigationController alloc] initWithRootViewController:pushVC];
 #else
                 UINavigationController *aNavVC = [[UINavigationController alloc] initWithRootViewController:pushVC];
 #endif
